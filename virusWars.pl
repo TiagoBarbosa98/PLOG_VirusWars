@@ -44,6 +44,9 @@ getIndexList(Index, [_|T], M):- Index > 0, NI is Index-1, getIndexList(NI, T, M)
 
 getIndexMatrix(C, L, Matrix, Elem):- getIndexList(L, Matrix, Row), getIndexList(C, Row, Elem).
 
+member(X, [X|_]).
+member(X, [_|T]):- member(X, T).
+
 genPos(L, C, pos(C, L)).
 
 getBluesCellsInRow(LI, Size, Size, LF, LF):- !.
@@ -86,19 +89,27 @@ isLive(blue, Board, pos(C, L)):- getSize(Board, Size), isRealPos(pos(C, L), Size
 isZombie(red, C, L, Board):- getSize(Board, Size), isRealPos(pos(C, L), Size), getIndexMatrix(C, L, Board, 'r'), !.
 isZombie(blue, C, L, Board):-  getSize(Board, Size), isRealPos(pos(C, L), Size), getIndexMatrix(C, L, Board, 'b'), !.
 
-isLinked(pos(C, L), Player, Board):- isZombie(Player, C, L, Board), (CL is C - 1, CR is C + 1, LUP is L - 1, LDOWN is L + 1, genPos(C, LUP, P1), genPos(C, LDOWN, P2), genPos(CL,  LUP, P3), 
-									 genPos(CL, L, P4), genPos(CL, LDOWN, P5), genPos(CR, LUP, P6), genPos(CR, L, P7), genPos(CR, LDOWN, P8)),
-									 ((isLive(Player, Board, P1); isLive(Player, Board, P2); isLive(Player, Board, P3);
-									 	isLive(Player, Board, P4); isLive(Player, Board, P5); isLive(Player, Board, P6);
-									 	isLive(Player, Board, P7); isLive(Player, Board, P8));
-									 	(isLinked(P1, Player, Board); isLinked(P2, Player, Board); isLinked(P3, Player, Board);
-									 		isLinked(P4, Player, Board); isLinked(P5, Player, Board); isLinked(P6, Player, Board);
-									 		isLinked(P7, Player, Board); isLinked(P8, Player, Board)) ), !.
+isZombieLinked(pos(C, L), Player, Board, CPL):- not(member(pos(C,L), CPL)), append(CPL, [pos(C, L)], NCPL) ,isZombie(Player, C, L, Board), (CL is C - 1, CR is C + 1, LUP is L - 1, LDOWN is L + 1, 
+														 genPos(LUP, C, P1), genPos(LDOWN, C, P2), genPos(LUP,  CL, P3), genPos(L, CL, P4), genPos(LDOWN, CL, P5), genPos(LUP, CR, P6), genPos(L, CR, P7), genPos(LDOWN, CR, P8)),
+									 					((isLive(Player, Board, P1); isLive(Player, Board, P2); isLive(Player, Board, P3);
+									 					isLive(Player, Board, P4); isLive(Player, Board, P5); isLive(Player, Board, P6);
+									 					isLive(Player, Board, P7); isLive(Player, Board, P8));
+									 					(isZombieLinked(P1, Player, Board, NCPL); isZombieLinked(P2, Player, Board, NCPL); isZombieLinked(P3, Player, Board, NCPL);
+									 					isZombieLinked(P4, Player, Board, NCPL); isZombieLinked(P5, Player, Board, NCPL); isZombieLinked(P6, Player, Board, NCPL);
+									 					isZombieLinked(P7, Player, Board, NCPL); isZombieLinked(P8, Player, Board, NCPL))), !.
 
 
 
-%valid_moves([], _, []).
-%valid_moves(Board, Player, ListOfMoves).
+
+
+getCellPlays(pos(C, L), Player, Board,CM):- (isLive(Player, Board, pos(C,L)) ; isZombieLinked(pos(C, L), Player, Board, [])), getSize(Board, Size), possibleCellMoves(pos(C,L), Player, Board, Size, CM).
+
+getCellsPlays([], _, _, Moves, Moves).
+getCellsPlays([H | TCells], Player, Board, TMoves,Moves):- getCellPlays(H, Player, Board, TL), append(TL, TMoves, NTMoves), getCellsPlays(TCells, Player, Board, NTMoves, Moves), !. 
+
+
+valid_moves(Board, red, ListOfMoves):- getSize(Board, Size), getRedsCells(Board,  Size, 0, [], RedsCells), getCellsPlays(RedsCells, red, Board, [], ListOfMoves), write(ListOfMoves), !.
+valid_moves(Board, blue, ListOfMoves):- getSize(Board, Size), getBluesCells(Board,  Size, 0, [], RedsCells), getCellsPlays(RedsCells, blue, Board, [], ListOfMoves), write(ListOfMoves), !.
 
 /*
  [[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
