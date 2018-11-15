@@ -3,18 +3,73 @@
 * Virus Wars board game coded in SWI-Prolog
 */
 
-virusWars:-
+virusWars:-	
+			%write()
 			write('Please select board size: '), nl, write('1. 11 x 11'), nl, write('2. 13 x 13'), nl, write('3. 15 x 15'), nl,
 			read(Size),
-			write(Size).
+			boardBySize(Size, Board), !.
 
-alterCol(_, [], _, _).
-alterCol(0, [H |T] ,NewChar, TemporaryList, NewBoar):- append(TemporaryList, [NewChar | T], NewBoar).
-alterCol(Column, [H | T], NewChar, TemporaryList, NewBoar):- Col is Column - 1, append(TemporaryList,  [H], NewTempList), alterCol(Col, T, NewChar, NewTempList, NewBoar).
+playerConfig(Blue, Red):- write('Please select game mode: '), nl, write('1. Human vs Human'), nl, write('2. Human vs Computer'), nl, write('3. Computer vs Computer'), nl,
+							read(Op), (Op = 1 -> Blue = human, Red = human ; (Op = 2 -> Blue = human, Red = ai; (Op = 3 -> Blue = ai, Red = ai; write('Invalid Input\n'),playerConfig(Blue, Red)))).
+
+boardConfig(Board, TB):- write('Please select board size: '), nl, write('1. 11 x 11'), nl, write('2. 13 x 13'), nl, write('3. 15 x 15'), nl,
+						read(Size), boardBySize(Size, TB), (TB = [] -> write('Invalid Input\n'), boardConfig(Board, NTB); boardBySize(Size, Board)).
+
+menu(Board, Blue, Red):- write('\n		VIRUS WARS		'), nl, nl, nl, write('1. Tutorial'), nl, write('2. New Game'), nl, write('3. Exit'), nl, read(Op),
+	   					(Op = 3 -> halt; (Op = 2 -> playerConfig(Blue, Red), boardConfig(Board, TB); (Op = 1 -> write('Tutorial Placeholder'), nl, menu(Board, Blue, Red); menu(Board, Blue, Red)))).
+
+boardBySize(1, [[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+				[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+				[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+				[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+				[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+				[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+				[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+				[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+				[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+				[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+				[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ']]).
+
+boardBySize(2, [[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+			    [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+			    [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+			    [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+			    [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+			    [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+			    [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+			    [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+			    [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+			    [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+			    [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+			    [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+			    [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ']]).
+
+boardBySize(3, [[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+				[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+				[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+				[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+				[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+				[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+				[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+				[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+				[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+				[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+				[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+				[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+				[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+				[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
+				[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ']]).
+
+boardBySize(X, []):- X \= 1, X \= 2, X \= 3.
 
 
-alterPos(0, Y, [H | T], NewChar, TemporaryList, NewBoar):- alterCol(Y, H, NewChar, TmpL, NewCol), append(TemporaryList, [NewCol | T], NewBoar).
-alterPos(X, Y, [H | T], NewChar, TemporaryList, NewBoar):- NewLine is X - 1, append(TemporaryList, [H], NewTempList), alterPos(NewLine, Y, T, NewChar, NewTempList, NewBoar).
+alterLine(_, [], _, _).
+alterLine(0, [H |T] ,NewChar, TemporaryList, NewBoar):- append(TemporaryList, [NewChar | T], NewBoar), !.
+alterLine(Column, [H | T], NewChar, TemporaryList, NewBoar):- Col is Column - 1, append(TemporaryList,  [H], NewTempList), alterLine(Col, T, NewChar, NewTempList, NewBoar).
+
+
+alterPos(C, 0, [H | T], NewChar, TemporaryList, NewBoar):- alterLine(C, H, NewChar, TmpL, NewLine), append(TemporaryList, [NewLine | T], NewBoar), !.
+alterPos(C, L, [H | T], NewChar, TemporaryList, NewBoar):- NewLine is L - 1, append(TemporaryList, [H], NewTempList), alterPos(C, NewLine, T, NewChar, NewTempList, NewBoar).
 
 getSize([], 0).
 getSize([H | T], Size):- getSize(T, NS), Size is 1 + NS.
@@ -110,6 +165,27 @@ getCellsPlays([H | TCells], Player, Board, TMoves,Moves):- getCellPlays(H, Playe
 
 valid_moves(Board, red, ListOfMoves):- getSize(Board, Size), getRedsCells(Board,  Size, 0, [], RedsCells), getCellsPlays(RedsCells, red, Board, [], ListOfMoves), write(ListOfMoves), !.
 valid_moves(Board, blue, ListOfMoves):- getSize(Board, Size), getBluesCells(Board,  Size, 0, [], RedsCells), getCellsPlays(RedsCells, blue, Board, [], ListOfMoves), write(ListOfMoves), !.
+
+move(play(blue, pos(C, L)), Board, Board):- valid_moves(Board, blue, LM), not(member(pos(C,L), LM)), write("\nInvalid Position\n"), !.
+move(play(blue, pos(C, L)), Board, NewBoar):- valid_moves(Board, blue, LM), member(pos(C,L), LM), getIndexMatrix(C, L, Board, Elem),
+											  (Elem = ' ' -> alterPos(C, L, Board, 'B', [], NewBoar) ; alterPos(C, L, Board, 'b', [], NewBoar)), !.
+
+move(play(red, pos(C, L)), Board, Board):- valid_moves(Board, red, LM), not(member(pos(C,L), LM)), write("\nInvalid Position\n"), !.
+move(play(red, pos(C, L)), Board, NewBoar):- valid_moves(Board, red, LM), member(pos(C,L), LM), getIndexMatrix(C, L, Board, Elem),
+											  (Elem = ' ' -> alterPos(C, L, Board, 'R', [], NewBoar) ; alterPos(C, L, Board, 'r', [], NewBoar)), !.
+
+game_over(Board, blue):- valid_moves(Board, red, []), write("\nBlue Wins: BLUETALITY\n"), !.
+game_over(Board, red):- valid_moves(Board, blue, []), write("\nRed Wins: REDALITY\n"), !.
+
+showValidMoves(Board, Player):- valid_moves(Board, Player, LM).
+
+play(C, L, Player,Board, TmpBoard,NewBoard):- write('Line: '), nl, read(L), nl, write('Column: '), nl, read(C), move(play(Player, pos(C, L)), Board, TmpBoard),
+											  (Board = TmpBoard -> play(NC, NL, Player, Board, NTmpBoard, NewBoard); move(play(Player, pos(C, L)), Board, NewBoard)).
+
+turn(Board, Player, TB, Board, 5).
+turn(Board, Player, TB, NewBoard, N):- N \= 5, write('\n1. Show Possible Moves\n'), write('2. Play'), nl, read(Op),
+								   (Op = 1 -> showValidMoves(Board, Player), turn(Board, Player, TB, NewBoard, N); play(C, L, Player, Board, TmpBoard, TB)), 
+								   NN is N + 1, display_game(TB, Player), turn(TB, Player, NTB, NewBoard, NN).
 
 /*
  [[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
