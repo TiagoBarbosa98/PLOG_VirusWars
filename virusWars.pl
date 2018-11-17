@@ -3,11 +3,7 @@
 * Virus Wars board game coded in SWI-Prolog
 */
 
-virusWars:-	
-			%write()
-			write('Please select board size: '), nl, write('1. 11 x 11'), nl, write('2. 13 x 13'), nl, write('3. 15 x 15'), nl,
-			read(Size),
-			boardBySize(Size, Board), !.
+virusWars:- menu(Board, Blue, Red), display_game(Board, blue), startGame(Board, human, human, NewBoard), display_game(NewBoard, blue).
 
 playerConfig(Blue, Red):- write('Please select game mode: '), nl, write('1. Human vs Human'), nl, write('2. Human vs Computer'), nl, write('3. Computer vs Computer'), nl,
 							read(Op), (Op = 1 -> Blue = human, Red = human ; (Op = 2 -> Blue = human, Red = ai; (Op = 3 -> Blue = ai, Red = ai; write('Invalid Input\n'),playerConfig(Blue, Red)))).
@@ -179,13 +175,23 @@ game_over(Board, red):- valid_moves(Board, blue, []), write("\nRed Wins: REDALIT
 
 showValidMoves(Board, Player):- valid_moves(Board, Player, LM).
 
-play(C, L, Player,Board, TmpBoard,NewBoard):- write('Line: '), nl, read(L), nl, write('Column: '), nl, read(C), move(play(Player, pos(C, L)), Board, TmpBoard),
+play(C, L, Player,Board, TmpBoard,NewBoard):- write('Column: '), nl, read(C), nl, write('Line: '), nl, read(L), move(play(Player, pos(C, L)), Board, TmpBoard),
 											  (Board = TmpBoard -> play(NC, NL, Player, Board, NTmpBoard, NewBoard); move(play(Player, pos(C, L)), Board, NewBoard)).
 
 turn(Board, Player, TB, Board, 5).
 turn(Board, Player, TB, NewBoard, N):- N \= 5, write('\n1. Show Possible Moves\n'), write('2. Play'), nl, read(Op),
 								   (Op = 1 -> showValidMoves(Board, Player), turn(Board, Player, TB, NewBoard, N); play(C, L, Player, Board, TmpBoard, TB)), 
 								   NN is N + 1, display_game(TB, Player), turn(TB, Player, NTB, NewBoard, NN).
+
+blue1stMove(Board, C, L, NewBoard):- write('Column'), nl, read(C), write('Line'),nl, read(L), getSize(Board, Size), Middle is Size/2, 
+									((C < floor(Middle), C >= 0, L < Size, L >= 0)->alterPos(C, L, Board, 'B', [], NewBoard); write('\nInvalid Position\n'), blue1stMove(Board,NC, NL, NewBoard)). 
+
+red1stMove(Board, C, L, NewBoard):- write('Column'), nl, read(C), write('Line'),nl, read(L), getSize(Board, Size), Middle is Size/2, 
+									((C > floor(Middle), C < Size, L < Size, L >= 0)->alterPos(C, L, Board, 'R', [], NewBoard); write('\nInvalid Position\n'), red1stMove(Board,NC, NL, NewBoard)). 
+
+startGame(Board, human, human, NewBoard):- nl, write("Blue pick your starting position, on the left side of the Board"), nl, blue1stMove(Board, CB, LB, TmpBoard), display_game(TmpBoard, red),
+										   nl, write("Red pick your starting position, on the left side of the Board"), nl, red1stMove(TmpBoard, CR, LR, NewBoard).
+%playGame(Board, human, human):- 
 
 /*
  [[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
