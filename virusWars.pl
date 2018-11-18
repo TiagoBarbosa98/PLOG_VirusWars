@@ -260,6 +260,22 @@ playGame(Board, human, human, NewBoard):- 	turn(Board, blue, TB, TmpBoard, 0),
 
 playGame(Board, ai1, ai1, NewBoard):- randomPlay(Board, ai1, ai1, NewBoard), !.
 
+count_elemL(_, [], N, N).
+count_elemL(X, [X | T], TN, N):- NN is TN + 1, count_elemL(X, T, NN, N), !.
+count_elemL(X, [H | T], TN, N):- H \= X, count_elemL(X, T, TN, N), !.
+
+count_elemM(_, [], NF, NF).
+count_elemM(X, [H | T], NT, NF):- count_elemL(X, H, 0, N), NNT is NT + N, count_elemM(X, T, NNT, NF), !.
+
+value(Board, TestedBoard, Player, 10):- game_over(TestedBoard, Player), !.
+value(Board, TestedBoard, red, 0):- game_over(TestedBoard, blue), !.
+value(Board, TestedBoard, blue, 0):- game_over(TestedBoard, red), !.
+value(Board, TestedBoard, red, 2):- count_elemM('r', TestedBoard, 0, NN), count_elemM('r', Board, 0, N), N < NN, !.
+value(Board, TestedBoard, red, 1):- count_elemM('R', TestedBoard, 0, NN), count_elemM('R', Board, 0, N), N < NN, !.
+value(Board, TestedBoard, blue, 2):- count_elemM('b', TestedBoard, 0, NN), count_elemM('b', Board, 0, N), N < NN, !.
+value(Board, TestedBoard, blue, 1):- count_elemM('B', TestedBoard, 0, NN), count_elemM('B', Board, 0, N), N < NN, !.
+
+%chose_move8
 
 
 %[['R', 'R','R', 'b', 'R'],['r','r','r','r','b'],['r','r','r','r','b'], ['r','r','r','B','B'], ['r','r','B','r','B']]
