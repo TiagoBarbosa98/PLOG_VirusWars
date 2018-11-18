@@ -3,7 +3,7 @@
 * Virus Wars board game coded in SWI-Prolog
 */
 
-virusWars:- menu(Board, Blue, Red), display_game(Board, blue), startGame(Board, Blue, Red, NewBoard), playGame(NewBoard, Blue, Red, NewNewBoard), virusWars.
+play:- menu(Board, Blue, Red), display_game(Board, blue), startGame(Board, Blue, Red, NewBoard), playGame(NewBoard, Blue, Red, NewNewBoard), play.
 
 playerConfig(Blue, Red):- write('Please select game mode: '), nl, write('1. Human vs Human'), nl, write('2. Human vs Computer'), nl, write('3. Computer vs Computer'), nl,
 							read(Op), (Op = 1 -> Blue = human, Red = human ; (Op = 2 -> Blue = human, aiConfig(Red); (Op = 3 -> aiConfig(Blue, Red); write('Invalid Input\n'),playerConfig(Blue, Red)))).
@@ -17,7 +17,8 @@ aiConfig(Blue, Red):- write("Select Computer LVL"), nl, write('1. Dumb vs Dumb')
 boardConfig(human, Board, TB):- write('Please select board size: '), nl, write('1. 11 x 11'), nl, write('2. 13 x 13'), nl, write('3. 15 x 15'), nl,
 								read(Size), boardBySize(Size, TB), (TB = [] -> write('Invalid Input\n'), boardConfig(Board, NTB); boardBySize(Size, Board)).
 
-boardConfig(Blue, Board, TB):- Blue \= human, boardBySize(ai, Board), !.
+boardConfig(ai1, Board, TB):- boardBySize(ai, Board), !.
+boardConfig(ai2, Board, TB):- boardBySize(ai2, Board), !.
 
 menu(Board, Blue, Red):- write('\n		VIRUS WARS		'), nl, nl, write('1. Tutorial'), nl, write('2. New Game'), nl, write('3. Exit'), nl, read(Op),
 	   					(Op = 3 -> halt;
@@ -30,6 +31,14 @@ boardBySize(ai, [[' ',' ',' ',' ',' '],
 				 [' ',' ',' ',' ',' '],
 				 [' ',' ',' ',' ',' '],
 				 [' ',' ',' ',' ',' ']]).
+
+boardBySize(ai2, [[' ',' ',' ',' ',' ', ' ', ' '],
+				 [' ',' ',' ',' ',' ', ' ', ' '],
+				 [' ',' ',' ',' ',' ', ' ', ' '],
+				 [' ',' ',' ',' ',' ', ' ', ' '],
+				 [' ',' ',' ',' ',' ', ' ', ' '],
+				 [' ',' ',' ',' ',' ', ' ', ' '],
+				 [' ',' ',' ',' ',' ', ' ', ' ']]).
 
 boardBySize(1, [[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
 				[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
@@ -233,7 +242,14 @@ red1stMove(Board, C, L, NewBoard):- write('Column'), nl, read(C), write('Line'),
 
 startGame(Board, human, human, NewBoard):- nl, write("Blue pick your starting position, on the left side of the Board"), nl, blue1stMove(Board, CB, LB, TmpBoard), display_game(TmpBoard, red),
 										   nl, write("Red pick your starting position, on the left side of the Board"), nl, red1stMove(TmpBoard, CR, LR, NewBoard).
-startGame(Board, ai1, ai1, NewBoard):- boardBySize(ai, B), random1stMove(B, ai1, blue, NB0), random1stMove(NB0, ai1, red, NewBoard), !.
+startGame(Board, ai1, ai1, NewBoard):- random1stMove(Board, ai1, blue, NB0), random1stMove(NB0, ai1, red, NewBoard), !.
+startGame(Board, human, ai1, NewBoard):- nl, write("Blue pick your starting position, on the left side of the Board"), nl, blue1stMove(Board, CB, LB, TmpBoard), display_game(TmpBoard, red),
+										  nl, random1stMove(TmpBoard, ai1, red, NewBoard), !.
+
+startGame(Board, human, ai2, NewBoard):- nl, write("Blue pick your starting position, on the left side of the Board"), nl, blue1stMove(Board, CB, LB, TmpBoard), display_game(TmpBoard, red),
+										  nl, random1stMove(TmpBoard, ai1, red, NewBoard), !.
+startGame(Board, ai2, ai2, NewBoard):- random1stMove(Board, ai1, blue, NB0), random1stMove(NB0, ai1, red, NewBoard), !.
+
 
 random1stMove(Board, ai1, blue, NewBoard):- getSize(Board, Size), SupLim is floor(Size/2) - 1, random_between(0, SupLim, C),  LimSup is Size - 1, random_between(0, LimSup, L), alterPos(C, L, Board, 'B', [], NewBoard), !.
 random1stMove(Board, ai1, red, NewBoard):- getSize(Board, Size), SupLim is ceiling(Size/2), LimSup is Size - 1, random_between(SupLim, LimSup, C),  random_between(0, LimSup, L), alterPos(C, L, Board, 'R', [], NewBoard), !.
@@ -260,6 +276,23 @@ playGame(Board, human, human, NewBoard):- 	turn(Board, blue, TB, TmpBoard, 0),
 
 playGame(Board, ai1, ai1, NewBoard):- randomPlay(Board, ai1, ai1, NewBoard), !.
 
+playGame(Board, human, ai1, NB):- game_over(Board, Player), display_game(Board, Player),format("~a wins!", Player), nl, write("Well Played!"), !.
+playGame(Board, human, ai1, NB):- turn(Board, blue, TB, TmpBoard, 0), randomTurn(TmpBoard, red, NewBoard, 0), playGame(NewBoard, human, ai1, NewNewBoard), !.
+
+playGame(Board, human, ai2,  NB):- game_over(Board, Player), display_game(Board, Player),format("~a wins!", Player), nl, write("Well Played!"), !.
+playGame(Board, human, ai2, NB):- turn(Board, blue, TB, TmpBoard, 0), thoughtTurn(TmpBoard, red, NewBoard, 0), playGame(NewBoard, human, ai2, NewNewBoard), !.
+
+playGame(Board, ai2, ai2,  NB):- game_over(Board, Player), display_game(Board, Player),format("~a wins!", Player), nl, write("Well Played!"), !.
+playGame(Board, ai2, ai2, NB):- thoughtTurn(Board, blue, TmpBoard, 0), display_game(Board, red), thoughtTurn(TmpBoard, red, NewBoard, 0), display_game(Board, blue), playGame(NewBoard, ai2, ai2, NewNewBoard), !.
+
+
+
+thoughtTurn(Board, _, Board, N):- game_over(Board, blue), !.
+thoughtTurn(Board, _, Board, N):- game_over(Board, red), !.
+thoughtTurn(Board, Player, Board, 5).
+thoughtTurn(Board, Player, NewBoard, N):- N \= 5, nl, chose_move(Board, ai2, Player, pos(C, L)), move(play(Player, pos(C,L)), Board, TB), NN is N + 1, thoughtTurn(TB, Player, NewBoard, NN), !.
+
+
 count_elemL(_, [], N, N).
 count_elemL(X, [X | T], TN, N):- NN is TN + 1, count_elemL(X, T, NN, N), !.
 count_elemL(X, [H | T], TN, N):- H \= X, count_elemL(X, T, TN, N), !.
@@ -277,10 +310,15 @@ value(Board, TestedBoard, blue, 1):- count_elemM('B', TestedBoard, 0, NN), count
 
 
 maxValueMove([], Board, Player, TV, Move, Move):- !.
-maxValueMove([pos(C, L) | T], Board, Player, 0, 0, Move):- getIndexMatrix(C, L, Board, Elem), (Elem = ' ' -> alterPos(C, L, Board, 'R', [], NewBoar) ; alterPos(C, L, Board, 'r', [], NewBoar)),
-															 value(Board, NewBoard, Player,  N), maxValueMove(T, Board, Player, N, pos(C, L), Move).
-maxValueMove([pos(C, L) | T], Board, Player, TV, TM, Move):- getIndexMatrix(C, L, Board, Elem), (Elem = ' ' -> alterPos(C, L, Board, 'R', [], NewBoar) ; alterPos(C, L, Board, 'r', [], NewBoar)),
-															 value(Board, NewBoard, Player, N), (N > TV -> X is 1; X is 0), (X = 1 -> maxValueMove(T, Board, Player, N, pos(C, L), Move) ; maxValueMove(T, Board, Player, TV,  TM, Move)), !.
+maxValueMove([pos(C, L) | T], Board, red, 0, 0, Move):- getIndexMatrix(C, L, Board, Elem), (Elem = ' ' -> alterPos(C, L, Board, 'R', [], NewBoar) ; alterPos(C, L, Board, 'r', [], NewBoar)),
+															 value(Board, NewBoard, red,  N), maxValueMove(T, Board, red, N, pos(C, L), Move).
+maxValueMove([pos(C, L) | T], Board, red, TV, TM, Move):- getIndexMatrix(C, L, Board, Elem), (Elem = ' ' -> alterPos(C, L, Board, 'R', [], NewBoar) ; alterPos(C, L, Board, 'r', [], NewBoar)),
+															 value(Board, NewBoard, red, N), (N > TV -> X is 1; X is 0), (X = 1 -> maxValueMove(T, Board, red, N, pos(C, L), Move) ; maxValueMove(T, Board, red, TV,  TM, Move)), !.
+
+maxValueMove([pos(C, L) | T], Board, blue, 0, 0, Move):- getIndexMatrix(C, L, Board, Elem), (Elem = ' ' -> alterPos(C, L, Board, 'R', [], NewBoar) ; alterPos(C, L, Board, 'r', [], NewBoar)),
+															 value(Board, NewBoard, blue,  N), maxValueMove(T, Board, blue, N, pos(C, L), Move).
+maxValueMove([pos(C, L) | T], Board, blue, TV, TM, Move):- getIndexMatrix(C, L, Board, Elem), (Elem = ' ' -> alterPos(C, L, Board, 'R', [], NewBoar) ; alterPos(C, L, Board, 'r', [], NewBoar)),
+															 value(Board, NewBoard, blue, N), (N > TV -> X is 1; X is 0), (X = 1 -> maxValueMove(T, Board, blue, N, pos(C, L), Move) ; maxValueMove(T, Board, blue, TV,  TM, Move)), !.
 
 
 chose_move(Board, ai1, Player, Move):- valid_moves(Board, Player, LM), getSize(LM, Moves),  SupLim is Moves - 1, random_between(0, SupLim, Index), getIndexList(Index, LM, Move), !.
