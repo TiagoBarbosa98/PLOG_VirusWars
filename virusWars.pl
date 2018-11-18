@@ -11,8 +11,11 @@ playerConfig(Blue, Red):- write('Please select game mode: '), nl, write('1. Huma
 boardConfig(Board, TB):- write('Please select board size: '), nl, write('1. 11 x 11'), nl, write('2. 13 x 13'), nl, write('3. 15 x 15'), nl,
 						read(Size), boardBySize(Size, TB), (TB = [] -> write('Invalid Input\n'), boardConfig(Board, NTB); boardBySize(Size, Board)).
 
-menu(Board, Blue, Red):- write('\n		VIRUS WARS		'), nl, nl, nl, write('1. Tutorial'), nl, write('2. New Game'), nl, write('3. Exit'), nl, read(Op),
-	   					(Op = 3 -> halt; (Op = 2 -> playerConfig(Blue, Red), boardConfig(Board, TB); (Op = 1 -> write('Tutorial Placeholder'), nl, menu(Board, Blue, Red); menu(Board, Blue, Red)))).
+menu(Board, Blue, Red):- write('\n		VIRUS WARS		'), nl, nl, write('1. Tutorial'), nl, write('2. New Game'), nl, write('3. Exit'), nl, read(Op),
+	   					(Op = 3 -> halt;
+	   					(Op = 2 -> playerConfig(Blue, Red), boardConfig(Board, TB); 
+	   					(Op = 1 -> writeTutorial, nl, menu(Board, Blue, Red);
+	   					menu(Board, Blue, Red)))).
 
 boardBySize(1, [[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
 				[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
@@ -218,3 +221,12 @@ playGame(Board, human, human, NewBoard):- 	turn(Board, blue, TB, TmpBoard, 0),
 /*
  [[' ',' ',' ','B',' ','R',' ',' ',' ',' ',' '],[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ']]
  */
+
+
+writeTutorial:- write('Virus Wars is a 2 player strategy game The objective for each player is to control the board and leave the opponent with no valid plays.'),
+			nl, nl, write('Each player has a virus colony, every move, the colony can grow further by adding another virus to the board, or by absorbing an opponent’s virus, making the piece a zombie.'),
+			nl, nl, write('The colors of the pieces available are blue and red. Whoever has the blue pieces always starts the game by placing a blue virus on the left side of the board. \n\nThere are 4 different piece types in Virus Wars: the blue virus and the red virus, the blue zombie and the red zombie.'),
+			nl, nl, write('The rules for each play are as follows (note that every play must be done adjacently to a virus of the person making the play already on the board or adjacently to a zombie which it’s connected to virus or adjacently to a zombie which it’s connected to another zombie connected to a virus, and so on):'),
+			nl, write('\tA generation is executed when you place a new virus on an empty square of the board;\n\tAn absorption is executed when you consume an opponent’s virus, replacing it with a permanent zombie (zombies cannot be consumed);'),
+			nl, nl, write('A player’s turn ends after 5 mandatory plays. Therefore, an example of a possible turn would be 4 generations followed by 1 absorption of a now adjacent opponent’s virus.'),
+			nl, nl, write('A player is declared the winner when the opponent cannot complete a turn, due to having no 5 valid plays to make in a row.\n\n').
