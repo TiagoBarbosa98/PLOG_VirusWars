@@ -3,7 +3,7 @@
 * Virus Wars board game coded in SWI-Prolog
 */
 
-play:- menu(Board, Blue, Red), display_game(Board, blue), startGame(Board, Blue, Red, NewBoard), playGame(NewBoard, Blue, Red, NewNewBoard), play.
+play:- use_module(library(random)),menu(Board, Blue, Red), display_game(Board, blue), startGame(Board, Blue, Red, NewBoard), playGame(NewBoard, Blue, Red, NewNewBoard), play.
 
 playerConfig(Blue, Red):- write('Please select game mode: '), nl, write('1. Human vs Human'), nl, write('2. Human vs Computer'), nl, write('3. Computer vs Computer'), nl,
 							read(Op), (Op = 1 -> Blue = human, Red = human ; (Op = 2 -> Blue = human, aiConfig(Red); (Op = 3 -> aiConfig(Blue, Red); write('Invalid Input\n'),playerConfig(Blue, Red)))).
@@ -251,12 +251,12 @@ startGame(Board, human, ai2, NewBoard):- nl, write("Blue pick your starting posi
 startGame(Board, ai2, ai2, NewBoard):- random1stMove(Board, ai1, blue, NB0), random1stMove(NB0, ai1, red, NewBoard), !.
 
 
-random1stMove(Board, ai1, blue, NewBoard):- getSize(Board, Size), SupLim is floor(Size/2) - 1, random_between(0, SupLim, C),  LimSup is Size - 1, random_between(0, LimSup, L), alterPos(C, L, Board, 'B', [], NewBoard), !.
-random1stMove(Board, ai1, red, NewBoard):- getSize(Board, Size), SupLim is ceiling(Size/2), LimSup is Size - 1, random_between(SupLim, LimSup, C),  random_between(0, LimSup, L), alterPos(C, L, Board, 'R', [], NewBoard), !.
+random1stMove(Board, ai1, blue, NewBoard):- getSize(Board, Size), SupLim is floor(Size/2) - 1, random(0, SupLim, C),  LimSup is Size - 1, random(0, LimSup, L), alterPos(C, L, Board, 'B', [], NewBoard), !.
+random1stMove(Board, ai1, red, NewBoard):- getSize(Board, Size), SupLim is ceiling(Size/2), LimSup is Size - 1, random(SupLim, LimSup, C),  random(0, LimSup, L), alterPos(C, L, Board, 'R', [], NewBoard), !.
 
-randomMove(C, L, red, Board, NewBoard):- valid_moves(Board, red, LM), getSize(LM, Moves),  SupLim is Moves - 1, random_between(0, SupLim, Index),
+randomMove(C, L, red, Board, NewBoard):- valid_moves(Board, red, LM), getSize(LM, Moves),  SupLim is Moves - 1, random(0, SupLim, Index),
 											getIndexList(Index, LM, pos(C, L)),  getIndexMatrix(C, L, Board, Elem), (Elem = ' ' -> alterPos(C, L, Board, 'R', [], NewBoard);alterPos(C, L, Board, 'r', [], NewBoard) ), !.
-randomMove(C, L, blue, Board, NewBoard):- valid_moves(Board, blue, LM), getSize(LM, Moves),  SupLim is Moves - 1, random_between(0, SupLim, Index),
+randomMove(C, L, blue, Board, NewBoard):- valid_moves(Board, blue, LM), getSize(LM, Moves),  SupLim is Moves - 1, random(0, SupLim, Index),
 											getIndexList(Index, LM, pos(C, L)),  getIndexMatrix(C, L, Board, Elem), (Elem = ' ' -> alterPos(C, L, Board, 'B', [], NewBoard);alterPos(C, L, Board, 'b', [], NewBoard) ), !.
 
 
@@ -321,7 +321,7 @@ maxValueMove([pos(C, L) | T], Board, blue, TV, TM, Move):- getIndexMatrix(C, L, 
 															 value(Board, NewBoard, blue, N), (N > TV -> X is 1; X is 0), (X = 1 -> maxValueMove(T, Board, blue, N, pos(C, L), Move) ; maxValueMove(T, Board, blue, TV,  TM, Move)), !.
 
 
-chose_move(Board, ai1, Player, Move):- valid_moves(Board, Player, LM), getSize(LM, Moves),  SupLim is Moves - 1, random_between(0, SupLim, Index), getIndexList(Index, LM, Move), !.
+chose_move(Board, ai1, Player, Move):- valid_moves(Board, Player, LM), getSize(LM, Moves),  SupLim is Moves - 1, random(0, SupLim, Index), getIndexList(Index, LM, Move), !.
 chose_move(Board, ai2, Player, Move):- valid_moves(Board, Player, LM), maxValueMove(LM, Board, Player, 0, 0, Move), !.
 
 
