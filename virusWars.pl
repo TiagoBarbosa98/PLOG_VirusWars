@@ -17,6 +17,12 @@ menu(Board, Blue, Red):- write('\n		VIRUS WARS		'), nl, nl, write('1. Tutorial')
 	   					(Op = 1 -> writeTutorial, nl, menu(Board, Blue, Red);
 	   					menu(Board, Blue, Red)))).
 
+boardBySize(ai1, [[' ',' ',' ',' ',' '],
+				 [' ',' ',' ',' ',' '],
+				 [' ',' ',' ',' ',' '],
+				 [' ',' ',' ',' ',' '],
+				 [' ',' ',' ',' ',' ']]).
+
 boardBySize(1, [[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
 				[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
 				[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
@@ -209,11 +215,11 @@ randomMove(C, L, Player, Board, NewBoard):- valid_moves(Board, Player, LM), getS
 randomTurn(Board, _, Board, N):- game_over(Board, blue), !.
 randomTurn(Board, _, Board, N):- game_over(Board, red), !.
 randomTurn(Board, Player, Board, 5).
-randomTurn(Board, Player, NewBoard, N):- N \= 5, nl, write(N), nl, display_game(Board, Player), randomMove(C1, L1, Player, Board, TB), NN is N + 1, randomTurn(TB, Player, NewBoard, NN), !.
+randomTurn(Board, Player, NewBoard, N):- N \= 5, nl,  randomMove(C1, L1, Player, Board, TB), NN is N + 1, randomTurn(TB, Player, NewBoard, NN), !.
 
 
 randomPlay(Board, ai1, ai1, NewBoard):- game_over(Board, Player), display_game(Board, Player),format("~a wins!", Player), nl, write("Well Played!"), !.
-randomPlay(Board, ai1, ai1, NewBoard):- randomTurn(Board, blue, NB, 0), randomTurn(NB, red, NNB, 0), write(NNB), randomPlay(NNB, ai1, ai1, NNNB), !.
+randomPlay(Board, ai1, ai1, NewBoard):- randomTurn(Board, blue, NB, 0), randomTurn(NB, red, NNB, 0), randomPlay(NNB, ai1, ai1, NNNB), !.
 
 playGame(Board, human, human, NewBoard):-  game_over(Board, Player), display_game(Board, Player),format("~a wins!", Player), nl, write("Well Played!"), !.
 playGame(Board, human, human, NewBoard):- 	turn(Board, blue, TB, TmpBoard, 0), 
