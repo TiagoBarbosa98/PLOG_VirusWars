@@ -275,7 +275,16 @@ value(Board, TestedBoard, red, 1):- count_elemM('R', TestedBoard, 0, NN), count_
 value(Board, TestedBoard, blue, 2):- count_elemM('b', TestedBoard, 0, NN), count_elemM('b', Board, 0, N), N < NN, !.
 value(Board, TestedBoard, blue, 1):- count_elemM('B', TestedBoard, 0, NN), count_elemM('B', Board, 0, N), N < NN, !.
 
-%chose_move8
+
+maxValueMove([], Board, Player, TV, Move, Move):- !.
+maxValueMove([pos(C, L) | T], Board, Player, 0, 0, Move):- getIndexMatrix(C, L, Board, Elem), (Elem = ' ' -> alterPos(C, L, Board, 'R', [], NewBoar) ; alterPos(C, L, Board, 'r', [], NewBoar)),
+															 value(Board, NewBoard, Player,  N), maxValueMove(T, Board, Player, N, pos(C, L), Move).
+maxValueMove([pos(C, L) | T], Board, Player, TV, TM, Move):- getIndexMatrix(C, L, Board, Elem), (Elem = ' ' -> alterPos(C, L, Board, 'R', [], NewBoar) ; alterPos(C, L, Board, 'r', [], NewBoar)),
+															 value(Board, NewBoard, Player, N), (N > TV -> X is 1; X is 0), (X = 1 -> maxValueMove(T, Board, Player, N, pos(C, L), Move) ; maxValueMove(T, Board, Player, TV,  TM, Move)), !.
+
+
+chose_move(Board, ai1, Player, Move):- valid_moves(Board, Player, LM), getSize(LM, Moves),  SupLim is Moves - 1, random_between(0, SupLim, Index), getIndexList(Index, LM, Move), !.
+chose_move(Board, ai2, Player, Move):- valid_moves(Board, Player, LM), maxValueMove(LM, Board, Player, 0, 0, Move), !.
 
 
 %[['R', 'R','R', 'b', 'R'],['r','r','r','r','b'],['r','r','r','r','b'], ['r','r','r','B','B'], ['r','r','B','r','B']]
