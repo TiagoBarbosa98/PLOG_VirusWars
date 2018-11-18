@@ -91,8 +91,7 @@ drawLine([H|T]):- printCell(H), drawLine(T).
 drawMatrix([], _, _).
 drawMatrix([H|T], L, Size):- drawHorizontalDivider(0, Size), nl, (L < 10 -> format("~d ", L); format("~d", L)), NL is L + 1, drawLine(H), nl, drawMatrix(T, NL, Size).
 
-display_game([], _):- write("wkbvweibfwbvi	wbbweibb").
-display_game(Board, Player):- getSize(Board, Size), printColumns(1, Size), nl, drawMatrix(Board, 0, Size), drawHorizontalDivider(0, Size), nl,format("~a \'s turn...", Player), !.
+display_game(Board, Player):- getSize(Board, Size), printColumns(1, Size), nl, drawMatrix(Board, 0, Size), drawHorizontalDivider(0, Size), nl,format("~a \'s turn...", Player), nl,!.
 
 getIndexList(0,[M|_],M):- !.
 getIndexList(Index, [_|T], M):- Index > 0, NI is Index-1, getIndexList(NI, T, M).
@@ -179,8 +178,6 @@ move(play(red, pos(C, L)), Board, NewBoar):- valid_moves(Board, red, LM), member
 game_over(Board, blue):- valid_moves(Board, red, []).
 game_over(Board, red):- valid_moves(Board, blue, []).
 
-%end(Board):- game_over(Board, blue) ; game_over()
-
 showValidMoves(Board, Player):- valid_moves(Board, Player, LM), write(LM).
 
 play(C, L, Player,Board, TmpBoard,NewBoard):- write('Column: '), nl, read(C), nl, write('Line: '), nl, read(L), move(play(Player, pos(C, L)), Board, TmpBoard),
@@ -194,15 +191,31 @@ turn(Board, Player, TB, NewBoard, N):- N \= 5, nl, display_game(Board, Player), 
 								   NN is N + 1, turn(TB, Player, NTB, NewBoard, NN).
 
 blue1stMove(Board, C, L, NewBoard):- write('Column'), nl, read(C), write('Line'),nl, read(L), getSize(Board, Size), Middle is Size/2, 
-									((C < floor(Middle), C >= 0, L < Size, L >= 0)->alterPos(C, L, Board, 'B', [], NewBoard); write('\nInvalid Position\n'), blue1stMove(Board,NC, NL, NewBoard)). 
+									((C < floor(Middle) - 1, C >= 0, L < Size, L >= 0)->alterPos(C, L, Board, 'B', [], NewBoard); write('\nInvalid Position\n'), blue1stMove(Board,NC, NL, NewBoard)). 
 
 red1stMove(Board, C, L, NewBoard):- write('Column'), nl, read(C), write('Line'),nl, read(L), getSize(Board, Size), Middle is Size/2, 
-									((C > floor(Middle), C < Size, L < Size, L >= 0)->alterPos(C, L, Board, 'R', [], NewBoard); write('\nInvalid Position\n'), red1stMove(Board,NC, NL, NewBoard)). 
+									((C > ceiling(Middle), C < Size, L < Size, L >= 0)->alterPos(C, L, Board, 'R', [], NewBoard); write('\nInvalid Position\n'), red1stMove(Board,NC, NL, NewBoard)). 
 
 startGame(Board, human, human, NewBoard):- nl, write("Blue pick your starting position, on the left side of the Board"), nl, blue1stMove(Board, CB, LB, TmpBoard), display_game(TmpBoard, red),
 										   nl, write("Red pick your starting position, on the left side of the Board"), nl, red1stMove(TmpBoard, CR, LR, NewBoard).
+%startGame(Board, ai1, ai1, NewBoard):-
 
-playGame(Board, human, human, NewBoard):- game_over(Board, Player), format("~a wins!", Player), nl, write("Well Played!"), !.
+random1stMove(Board, ai1, blue, NewBoard):- getSize(Board, Size), SupLim is floor(Size/2) - 1, random_between(0, SupLim, C),  LimSup is Size - 1, random_between(0, LimSup, L), alterPos(C, L, Board, 'B', [], NewBoard), !.
+random1stMove(Board, ai1, red, NewBoard):- getSize(Board, Size), SupLim is ceiling(Size/2), LimSup is Size - 1, random_between(SupLim, LimSup, C),  random_between(0, LimSup, L), alterPos(C, L, Board, 'R', [], NewBoard), !.
+
+randomMove(C, L, Player, Board, NewBoard):- valid_moves(Board, Player, LM), getSize(LM, Moves),  SupLim is Moves - 1, random_between(0, SupLim, Index),
+											getIndexList(Index, LM, pos(C, L)),  move(play(Player, pos(C, L)), Board, NewBoard), !.
+
+randomTurn(Board, _, Board, N):- game_over(Board, blue), !.
+randomTurn(Board, _, Board, N):- game_over(Board, red), !.
+randomTurn(Board, Player, Board, 5).
+randomTurn(Board, Player, NewBoard, N):- N \= 5, nl, write(N), nl, display_game(Board, Player), randomMove(C1, L1, Player, Board, TB), NN is N + 1, randomTurn(TB, Player, NewBoard, NN), !.
+
+
+randomPlay(Board, ai1, ai1, NewBoard):- game_over(Board, Player), display_game(Board, Player),format("~a wins!", Player), nl, write("Well Played!"), !.
+randomPlay(Board, ai1, ai1, NewBoard):- randomTurn(Board, blue, NB, 0), randomTurn(NB, red, NNB, 0), write(NNB), randomPlay(NNB, ai1, ai1, NNNB), !.
+
+playGame(Board, human, human, NewBoard):-  game_over(Board, Player), display_game(Board, Player),format("~a wins!", Player), nl, write("Well Played!"), !.
 playGame(Board, human, human, NewBoard):- 	turn(Board, blue, TB, TmpBoard, 0), 
 											turn(TmpBoard, red, NTB, NewBoard, 0),	
 											playGame(NewBoard, human, human, NewNewBoard).
@@ -220,6 +233,8 @@ playGame(Board, human, human, NewBoard):- 	turn(Board, blue, TB, TmpBoard, 0),
 
 /*
  [[' ',' ',' ','B',' ','R',' ',' ',' ',' ',' '],[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ']]
+ 
+
  */
 
 
