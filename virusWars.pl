@@ -3,7 +3,7 @@
 * Virus Wars board game coded in SWI-Prolog
 */
 
-virusWars:- menu(Board, Blue, Red), display_game(Board, blue), startGame(Board, human, human, NewBoard), display_game(NewBoard, blue).
+virusWars:- menu(Board, Blue, Red), display_game(Board, blue), startGame(Board, Blue, Red, NewBoard), playGame(NewBoard, Blue, Red, NewNewBoard), virusWars.
 
 playerConfig(Blue, Red):- write('Please select game mode: '), nl, write('1. Human vs Human'), nl, write('2. Human vs Computer'), nl, write('3. Computer vs Computer'), nl,
 							read(Op), (Op = 1 -> Blue = human, Red = human ; (Op = 2 -> Blue = human, Red = ai; (Op = 3 -> Blue = ai, Red = ai; write('Invalid Input\n'),playerConfig(Blue, Red)))).
@@ -88,6 +88,7 @@ drawLine([H|T]):- printCell(H), drawLine(T).
 drawMatrix([], _, _).
 drawMatrix([H|T], L, Size):- drawHorizontalDivider(0, Size), nl, (L < 10 -> format("~d ", L); format("~d", L)), NL is L + 1, drawLine(H), nl, drawMatrix(T, NL, Size).
 
+display_game([], _):- write("wkbvweibfwbvi	wbbweibb").
 display_game(Board, Player):- getSize(Board, Size), printColumns(1, Size), nl, drawMatrix(Board, 0, Size), drawHorizontalDivider(0, Size), nl,format("~a \'s turn...", Player), !.
 
 getIndexList(0,[M|_],M):- !.
@@ -153,14 +154,16 @@ isZombieLinked(pos(C, L), Player, Board, CPL):- not(member(pos(C,L), CPL)), appe
 
 
 
-getCellPlays(pos(C, L), Player, Board,CM):- (isLive(Player, Board, pos(C,L)) ; isZombieLinked(pos(C, L), Player, Board, [])), getSize(Board, Size), possibleCellMoves(pos(C,L), Player, Board, Size, CM).
+getCellPlays(pos(C, L), Player, Board,CM):- (isLive(Player, Board, pos(C,L)) ; isZombieLinked(pos(C, L), Player, Board, [])), getSize(Board, Size), possibleCellMoves(pos(C,L), Player, Board, Size, CM), !.
+getCellPlays(pos(C, L), Player, Board,[]):- not(isLive(Player, Board, pos(C, L))) ; not(isZombieLinked(pos(C, L), Player, Board, [])).
 
 getCellsPlays([], _, _, Moves, Moves).
 getCellsPlays([H | TCells], Player, Board, TMoves,Moves):- getCellPlays(H, Player, Board, TL), append(TL, TMoves, NTMoves), getCellsPlays(TCells, Player, Board, NTMoves, Moves), !. 
 
 
-valid_moves(Board, red, ListOfMoves):- getSize(Board, Size), getRedsCells(Board,  Size, 0, [], RedsCells), getCellsPlays(RedsCells, red, Board, [], ListOfMoves), write(ListOfMoves), !.
-valid_moves(Board, blue, ListOfMoves):- getSize(Board, Size), getBluesCells(Board,  Size, 0, [], RedsCells), getCellsPlays(RedsCells, blue, Board, [], ListOfMoves), write(ListOfMoves), !.
+valid_moves(Board, red, ListOfMoves):- getSize(Board, Size), getRedsCells(Board,  Size, 0, [], RedsCells), getCellsPlays(RedsCells, red, Board, [], ListOfMoves), !.
+valid_moves(Board, blue, ListOfMoves):- getSize(Board, Size), getBluesCells(Board,  Size, 0, [], RedsCells), getCellsPlays(RedsCells, blue, Board, [], ListOfMoves), !.
+
 
 move(play(blue, pos(C, L)), Board, Board):- valid_moves(Board, blue, LM), not(member(pos(C,L), LM)), write("\nInvalid Position\n"), !.
 move(play(blue, pos(C, L)), Board, NewBoar):- valid_moves(Board, blue, LM), member(pos(C,L), LM), getIndexMatrix(C, L, Board, Elem),
@@ -170,18 +173,22 @@ move(play(red, pos(C, L)), Board, Board):- valid_moves(Board, red, LM), not(memb
 move(play(red, pos(C, L)), Board, NewBoar):- valid_moves(Board, red, LM), member(pos(C,L), LM), getIndexMatrix(C, L, Board, Elem),
 											  (Elem = ' ' -> alterPos(C, L, Board, 'R', [], NewBoar) ; alterPos(C, L, Board, 'r', [], NewBoar)), !.
 
-game_over(Board, blue):- valid_moves(Board, red, []), write("\nBlue Wins: BLUETALITY\n"), !.
-game_over(Board, red):- valid_moves(Board, blue, []), write("\nRed Wins: REDALITY\n"), !.
+game_over(Board, blue):- valid_moves(Board, red, []).
+game_over(Board, red):- valid_moves(Board, blue, []).
 
-showValidMoves(Board, Player):- valid_moves(Board, Player, LM).
+%end(Board):- game_over(Board, blue) ; game_over()
+
+showValidMoves(Board, Player):- valid_moves(Board, Player, LM), write(LM).
 
 play(C, L, Player,Board, TmpBoard,NewBoard):- write('Column: '), nl, read(C), nl, write('Line: '), nl, read(L), move(play(Player, pos(C, L)), Board, TmpBoard),
 											  (Board = TmpBoard -> play(NC, NL, Player, Board, NTmpBoard, NewBoard); move(play(Player, pos(C, L)), Board, NewBoard)).
 
+turn(Board, _, TB, Board, N):- game_over(Board, blue), !.
+turn(Board, _, TB, Board, N):- game_over(Board, red), !.
 turn(Board, Player, TB, Board, 5).
-turn(Board, Player, TB, NewBoard, N):- N \= 5, write('\n1. Show Possible Moves\n'), write('2. Play'), nl, read(Op),
+turn(Board, Player, TB, NewBoard, N):- N \= 5, nl, display_game(Board, Player), nl, write('\n1. Show Possible Moves\n'), write('2. Play'), nl, read(Op),
 								   (Op = 1 -> showValidMoves(Board, Player), turn(Board, Player, TB, NewBoard, N); play(C, L, Player, Board, TmpBoard, TB)), 
-								   NN is N + 1, display_game(TB, Player), turn(TB, Player, NTB, NewBoard, NN).
+								   NN is N + 1, turn(TB, Player, NTB, NewBoard, NN).
 
 blue1stMove(Board, C, L, NewBoard):- write('Column'), nl, read(C), write('Line'),nl, read(L), getSize(Board, Size), Middle is Size/2, 
 									((C < floor(Middle), C >= 0, L < Size, L >= 0)->alterPos(C, L, Board, 'B', [], NewBoard); write('\nInvalid Position\n'), blue1stMove(Board,NC, NL, NewBoard)). 
@@ -191,18 +198,23 @@ red1stMove(Board, C, L, NewBoard):- write('Column'), nl, read(C), write('Line'),
 
 startGame(Board, human, human, NewBoard):- nl, write("Blue pick your starting position, on the left side of the Board"), nl, blue1stMove(Board, CB, LB, TmpBoard), display_game(TmpBoard, red),
 										   nl, write("Red pick your starting position, on the left side of the Board"), nl, red1stMove(TmpBoard, CR, LR, NewBoard).
-%playGame(Board, human, human):- 
+
+playGame(Board, human, human, NewBoard):- game_over(Board, Player), format("~a wins!", Player), nl, write("Well Played!"), !.
+playGame(Board, human, human, NewBoard):- 	turn(Board, blue, TB, TmpBoard, 0), 
+											turn(TmpBoard, red, NTB, NewBoard, 0),	
+											playGame(NewBoard, human, human, NewNewBoard).
+
+
+
+
+
+
+%playGame(Board, human, human, NewBoard):- not(game_over(Board, blue)) , not(game_over(Board, red)), display_game(Board, blue), turn(Board, blue, TB, NB, 0),
+%											((game_over(NB, blue) ; game_over(NB, red))-> write('Well played!'); nl, write('Blue acabou'), nl, display_game(NB, red), turn(NB, red, NTB, NewBoard, 0), ((game_over(NB, blue) ; game_over(NB, red)) -> write('Well played!') ; nl, write('Red acabou'), playGame(NewBoard, human, human, NewNewBoard), !)), !.
+%playGame(Board, _, _, _):- game_over(Board, red), write("PILASVERMELHAS").
+%playGame(Board, _, _, _):- game_over(Board, blue), write("PILASAZUIS").
+%playGame(Board, human, human, NewBoard):- (game_over(Board, blue)) ; (game_over(Board, red)), !.
 
 /*
- [[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
-  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
-  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
-  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
-  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
-  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
-  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
-  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
-  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
-  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
-  [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ']]
+ [[' ',' ',' ','B',' ','R',' ',' ',' ',' ',' '],[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],[' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ']]
  */
