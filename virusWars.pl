@@ -14,7 +14,7 @@ aiConfig(Red):- write("Select Computer LVL"), nl, write('1. Random'), nl, write(
 aiConfig(Blue, Red):- write("Select Computer LVL"), nl, write('1. Dumb vs Dumb'), nl, write('2. Dumber vs Dumber'), nl, write('3. Dumb vs Dumber'), nl,
 					  read(Op), (Op = 1 -> Blue = ai2, Red = ai2; (Op = 2 -> Blue = ai1, Red = ai1; (Op = 3 -> Blue = ai2, Red = ai1; aiConfig(Blue, Red)))), !.
 
-boardConfig(human, Board, TB):- write('Please select board size: '), nl, write('1. 11 x 11'), nl, write('2. 13 x 13'), nl, write('3. 15 x 15'), nl,
+boardConfig(human, Board, TB):- write('Please select board size: '), nl, write('0. 5 x 5'), nl,  write('1. 11 x 11'), nl, write('2. 13 x 13'), nl, write('3. 15 x 15'), nl,
 								read(Size), boardBySize(Size, TB), (TB = [] -> write('Invalid Input\n'), boardConfig(Board, NTB); boardBySize(Size, Board)).
 
 boardConfig(ai1, Board, TB):- boardBySize(ai, Board), !.
@@ -25,6 +25,14 @@ menu(Board, Blue, Red):- write('\n		VIRUS WARS		'), nl, nl, write('1. Tutorial')
 	   					(Op = 2 -> playerConfig(Blue, Red), boardConfig(Blue, Board, TB); 
 	   					(Op = 1 -> writeTutorial, nl, menu(Board, Blue, Red);
 	   					menu(Board, Blue, Red)))).
+
+
+boardBySize(0, [[' ',' ',' ',' ',' ', ' '],
+				[' ',' ',' ',' ',' ', ' '],
+				[' ',' ',' ',' ',' ', ' '],
+				[' ',' ',' ',' ',' ', ' '],
+				[' ',' ',' ',' ',' ', ' '],
+				[' ',' ',' ',' ',' ', ' ']]).				 
 
 boardBySize(ai, [[' ',' ',' ',' ',' '],
 				 [' ',' ',' ',' ',' '],
@@ -211,11 +219,11 @@ valid_moves(Board, red, ListOfMoves):- getSize(Board, Size), getRedsCells(Board,
 valid_moves(Board, blue, ListOfMoves):- getSize(Board, Size), getBluesCells(Board,  Size, 0, [], RedsCells), getCellsPlays(RedsCells, blue, Board, [], ListOfMoves), !.
 
 
-move(play(blue, pos(C, L)), Board, Board):- valid_moves(Board, blue, LM), not(member(pos(C,L), LM)), write("\nInvalid Position\n"), !.
+move(play(blue, pos(C, L)), Board, Board):- valid_moves(Board, blue, LM), not(member(pos(C,L), LM)), write("\nInvalid Position\n").
 move(play(blue, pos(C, L)), Board, NewBoar):- valid_moves(Board, blue, LM), member(pos(C,L), LM), getIndexMatrix(C, L, Board, Elem),
 											  (Elem = ' ' -> alterPos(C, L, Board, 'B', [], NewBoar) ; alterPos(C, L, Board, 'b', [], NewBoar)), !.
 
-move(play(red, pos(C, L)), Board, Board):- valid_moves(Board, red, LM), not(member(pos(C,L), LM)), write("\nInvalid Position\n"), !.
+move(play(red, pos(C, L)), Board, Board):- valid_moves(Board, red, LM), not(member(pos(C,L), LM)), write("\nInvalid Position\n").
 move(play(red, pos(C, L)), Board, NewBoar):- valid_moves(Board, red, LM), member(pos(C,L), LM), getIndexMatrix(C, L, Board, Elem),
 											  (Elem = ' ' -> alterPos(C, L, Board, 'R', [], NewBoar) ; alterPos(C, L, Board, 'r', [], NewBoar)), !.
 
@@ -229,9 +237,9 @@ play(C, L, Player,Board, TmpBoard,NewBoard):- write('Column: '), nl, read(C), nl
 
 turn(Board, _, TB, Board, N):- game_over(Board, blue), !.
 turn(Board, _, TB, Board, N):- game_over(Board, red), !.
-turn(Board, Player, TB, Board, 5).
-turn(Board, Player, TB, NewBoard, N):- N \= 5, nl, display_game(Board, Player), nl, write('\n1. Show Possible Moves\n'), write('2. Play'), nl, read(Op),
-								   (Op = 1 -> showValidMoves(Board, Player), turn(Board, Player, TB, NewBoard, N); play(C, L, Player, Board, TmpBoard, TB)), 
+turn(Board, Player, TB, Board, 2).
+turn(Board, Player, TB, NewBoard, N):- N \= 2, nl, display_game(Board, Player), nl, write('\n1. Show Possible Moves\n'), write('2. Play'), nl, read(Op),
+								   (Op = 1 -> showValidMoves(Board, Player), turn(Board, Player, TB, NewBoard, N), ! ; play(C, L, Player, Board, TmpBoard, TB)), 
 								   NN is N + 1, turn(TB, Player, NTB, NewBoard, NN), !.
 
 blue1stMove(Board, C, L, NewBoard):- write('Column'), nl, read(C), write('Line'),nl, read(L), getSize(Board, Size), Middle is Size/2, 
@@ -254,7 +262,7 @@ startGame(Board, ai2, ai2, NewBoard):- random1stMove(Board, ai1, blue, NB0), ran
 random1stMove(Board, ai1, blue, NewBoard):- getSize(Board, Size), SupLim is floor(Size/2) - 1, random(0, SupLim, C),  LimSup is Size - 1, random(0, LimSup, L), alterPos(C, L, Board, 'B', [], NewBoard), !.
 random1stMove(Board, ai1, red, NewBoard):- getSize(Board, Size), SupLim is ceiling(Size/2), LimSup is Size - 1, random(SupLim, LimSup, C),  random(0, LimSup, L), alterPos(C, L, Board, 'R', [], NewBoard), !.
 
-randomMove(C, L, red, Board, NewBoard):- valid_moves(Board, red, LM), getSize(LM, Moves),  SupLim is Moves - 1, random(0, SupLim, Index),
+randomMove(C, L, red, Board, NewBoard):- valid_moves(Board, red, LM), getSize(LM, Moves),  SupLim is Moves - 1,(SupLim >= 1 -> random(0, SupLim, Index); Index is 0), 
 											getIndexList(Index, LM, pos(C, L)),  getIndexMatrix(C, L, Board, Elem), (Elem = ' ' -> alterPos(C, L, Board, 'R', [], NewBoard);alterPos(C, L, Board, 'r', [], NewBoard) ), !.
 randomMove(C, L, blue, Board, NewBoard):- valid_moves(Board, blue, LM), getSize(LM, Moves),  SupLim is Moves - 1, random(0, SupLim, Index),
 											getIndexList(Index, LM, pos(C, L)),  getIndexMatrix(C, L, Board, Elem), (Elem = ' ' -> alterPos(C, L, Board, 'B', [], NewBoard);alterPos(C, L, Board, 'b', [], NewBoard) ), !.
@@ -262,8 +270,8 @@ randomMove(C, L, blue, Board, NewBoard):- valid_moves(Board, blue, LM), getSize(
 
 randomTurn(Board, _, Board, N):- game_over(Board, blue), !.
 randomTurn(Board, _, Board, N):- game_over(Board, red), !.
-randomTurn(Board, Player, Board, 5).
-randomTurn(Board, Player, NewBoard, N):- N \= 5, nl,  randomMove(C1, L1, Player, Board, TB), NN is N + 1, randomTurn(TB, Player, NewBoard, NN), !.
+randomTurn(Board, Player, Board, 2).
+randomTurn(Board, Player, NewBoard, N):- N \= 2, nl,  randomMove(C1, L1, Player, Board, TB), NN is N + 1, randomTurn(TB, Player, NewBoard, NN), !.
 
 
 randomPlay(Board, ai1, ai1, NewBoard):- game_over(Board, Player), display_game(Board, Player),format("~a wins!", Player), nl, write("Well Played!"), !.
@@ -289,8 +297,8 @@ playGame(Board, ai2, ai2, NB):- thoughtTurn(Board, blue, TmpBoard, 0), display_g
 
 thoughtTurn(Board, _, Board, N):- game_over(Board, blue), !.
 thoughtTurn(Board, _, Board, N):- game_over(Board, red), !.
-thoughtTurn(Board, Player, Board, 5).
-thoughtTurn(Board, Player, NewBoard, N):- N \= 5, nl, chose_move(Board, ai2, Player, pos(C, L)), move(play(Player, pos(C,L)), Board, TB), NN is N + 1, thoughtTurn(TB, Player, NewBoard, NN), !.
+thoughtTurn(Board, Player, Board, 2).
+thoughtTurn(Board, Player, NewBoard, N):- N \= 2, nl, chose_move(Board, ai2, Player, pos(C, L)), move(play(Player, pos(C,L)), Board, TB), NN is N + 1, thoughtTurn(TB, Player, NewBoard, NN), !.
 
 
 count_elemL(_, [], N, N).
