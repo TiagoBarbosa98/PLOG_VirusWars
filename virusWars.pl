@@ -219,11 +219,11 @@ valid_moves(Board, red, ListOfMoves):- getSize(Board, Size), getRedsCells(Board,
 valid_moves(Board, blue, ListOfMoves):- getSize(Board, Size), getBluesCells(Board,  Size, 0, [], RedsCells), getCellsPlays(RedsCells, blue, Board, [], ListOfMoves), !.
 
 
-move(play(blue, pos(C, L)), Board, Board):- valid_moves(Board, blue, LM), not(member(pos(C,L), LM)), write("\nInvalid Position\n").
+move(play(blue, pos(C, L)), Board, Board):- valid_moves(Board, blue, LM), not(member(pos(C,L), LM)), write("\nInvalid Position, you stoopid\n").
 move(play(blue, pos(C, L)), Board, NewBoar):- valid_moves(Board, blue, LM), member(pos(C,L), LM), getIndexMatrix(C, L, Board, Elem),
 											  (Elem = ' ' -> alterPos(C, L, Board, 'B', [], NewBoar) ; alterPos(C, L, Board, 'b', [], NewBoar)), !.
 
-move(play(red, pos(C, L)), Board, Board):- valid_moves(Board, red, LM), not(member(pos(C,L), LM)), write("\nInvalid Position\n").
+move(play(red, pos(C, L)), Board, Board):- valid_moves(Board, red, LM), not(member(pos(C,L), LM)), write("\nInvalid Position, you stoopid\n").
 move(play(red, pos(C, L)), Board, NewBoar):- valid_moves(Board, red, LM), member(pos(C,L), LM), getIndexMatrix(C, L, Board, Elem),
 											  (Elem = ' ' -> alterPos(C, L, Board, 'R', [], NewBoar) ; alterPos(C, L, Board, 'r', [], NewBoar)), !.
 
@@ -238,9 +238,14 @@ play(C, L, Player,Board, TmpBoard,NewBoard):- write('Column: '), nl, read(C), nl
 turn(Board, _, TB, Board, N):- game_over(Board, blue), !.
 turn(Board, _, TB, Board, N):- game_over(Board, red), !.
 turn(Board, Player, TB, Board, 2).
-turn(Board, Player, TB, NewBoard, N):- N \= 2, nl, display_game(Board, Player), nl, write('\n1. Show Possible Moves\n'), write('2. Play'), nl, read(Op),
-								   (Op = 1 -> showValidMoves(Board, Player), turn(Board, Player, TB, NewBoard, N), ! ; play(C, L, Player, Board, TmpBoard, TB)), 
-								   NN is N + 1, turn(TB, Player, NTB, NewBoard, NN), !.
+
+turn(Board, Player, TB, NewBoard, 0):- nl, display_game(Board, Player), nl, write('\n1. Show Possible Moves\n'), write('2. Play'), nl, read(Op),
+								   (Op = 1 -> showValidMoves(Board, Player), turn(Board, Player, TB, NewBoard, 0), ! ; play(C, L, Player, Board, TmpBoard, TB)), 
+								   turn(TB, Player, Board, NewBoard, 1), !.
+
+turn(Board, Player, TB, NewBoard, 1):- nl, display_game(Board, Player), nl, write('\n1. Show ImPossible Moves\n'), write('2. Play'), nl, write('3. Undo Last Move'), nl, read(Op),
+								   (Op = 1 -> showValidMoves(Board, Player), turn(Board, Player, TB, NewBoard, 1), ! ; (Op = 3 -> turn(TB, Player, _, NewBoard, 0) , ! ; play(C, L, Player, Board, TmpBoard, TTB))), 
+								   turn(TTB, Player, NTB, NewBoard, 2), !.
 
 blue1stMove(Board, C, L, NewBoard):- write('Column'), nl, read(C), write('Line'),nl, read(L), getSize(Board, Size), Middle is Size/2, 
 									((C < floor(Middle) - 1, C >= 0, L < Size, L >= 0)->alterPos(C, L, Board, 'B', [], NewBoard); write('\nInvalid Position\n'), blue1stMove(Board,NC, NL, NewBoard)). 
